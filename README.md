@@ -149,3 +149,15 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
   List<Member> findUserByQuery(@Param("userName") final String userName, @Param("age") final int age);
   ~~~
 * 애플리케이션 로딩 시점에 쿼리 오타 등 에러를 잡아 줌
+
+### `@Query`, 값, DTO 조회
+* 값을 조회할 때
+  * ~~~
+    @Query("select m.userName from Member m")
+    List<String> findUserNameList();
+    ~~~
+* `DTO`를 통해 조회할 때 `new` 키워드를 사용해야 함
+  * ~~~
+    @Query("select new com.jaenyeong.study_actualspringdatajpa.dto.MemberDto(m.id, m.userName, t.name) from Member m join m.team t")
+    List<MemberDto> findUsersForMemberDto();
+    ~~~
