@@ -14,6 +14,10 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
 * 2.4.5
 #### H2
 * 1.4.200
+#### Connection pool
+* HikariCP
+#### Log
+* SLF4J, LogBack
 -----
 
 ## [환경설정]
