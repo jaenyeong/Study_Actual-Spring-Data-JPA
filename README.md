@@ -82,9 +82,36 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
 * `Project Structure`에서 `Facets` 경로
   * `JPA`를 `Study_Actual-Spring-Data-JPA.main` 경로 설정 추가
 
+### Java Config 설정
+* `@EnableJpaRepositories(basePackages = "com.jaenyeong.study_actualspringdatajpa.repository")` 설정 생략
+  * 해당 설정을 스프링 부트가 대신해 주기 때문에 생략 가능
+  * 위치가 달라져 `@SpringBootApplication` 애너테이션 하위가 아닌 경우 설정 필요
+
 ## 도메인(엔티티)
 * 멤버
 * 팀
 
 ### 연관관계 로딩 확인
 * `*ToOne` 관계는 기본적으로 EAGER(즉시 로딩)이기 때문에 LAZY(지연 로딩)으로 변경
+
+## Spring Data JPA
+* `Spring Data JPA`가 로딩 시점에 `JpaRepository` 인터페이스를 구현한 `repository interface`의 구현체(프록시)를 만들어 줌
+  * `find`, `save` 등 이미 대다수의 기본 기능이 구현되어 있음
+* `@Repository` 애너테이션 생략 가능
+  * `@Repository`는 컴포넌트 스캔 기능, 발생된 예외(JPA)를 스프링 예외로 변환해주는 기능을 포함
+
+### `Repository` 인터페이스 분석
+* `Spring Data` 패키지
+  * `Repository`
+    * 기본 `Repository` 마커 인터페이스
+  * `CrudRepository`
+    * `Repository` 인터페이스 구현
+  * `PagingAndSortingRepository`
+    * `CrudRepository` 인터페이스 구현
+* `Spring Data JPA` 패키지
+  * `JpaRepository`
+    * `PagingAndSortingRepository` 인터페이스 구현
+
+### 주요 메서드
+* `save`, `delete`, `findById` 등 주요 공통 메서드 제공
+  * `JpaRepository`는 대부분의 공통 메서드 제공
