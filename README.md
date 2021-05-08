@@ -66,3 +66,14 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
     org.hibernate.SQL: debug
   #  org.hibernate.type: trace
   ~~~
+
+### p6spy 설정
+* 쿼리와 파라미터를 동시에 볼 수 있게 도와주는 외부 라이브러리 설정
+  * [p6spy 저장소 참조](https://github.com/gavlyukovskiy/spring-boot-data-source-decorator)
+* `build.gradle` 설정
+  * `implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.7`
+* ~~~
+  2021-05-08 16:45:27.772  INFO 37512 --- [           main] p6spy                                    : #1620459927772 | took 0ms | statement | connection 3| url jdbc:h2:tcp://localhost/~/datajpa
+  insert into member (user_name, id) values (?, ?)
+  insert into member (user_name, id) values ('memberA', 1);
+  ~~~
