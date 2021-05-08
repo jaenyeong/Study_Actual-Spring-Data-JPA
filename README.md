@@ -123,3 +123,22 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
   * 일반적으로 파라미터를 `2~3개`까지만 사용하는 쿼리 메서드 구현
 * 엔티티의 필드명이 변경되면 반드시 쿼리 메서드명도 함께 변경해야 함
   * 변경하지 않으면 애플리케이션을 시작할 때 에러 발생
+
+### `JPA Named Query`
+* 정적 쿼리
+  * 네임드 쿼리는 정적 쿼리이기 때문에 애플리케이션 로딩 시점에 쿼리 오타 등 에러를 잡아 준다는 장점이 있음
+  * 기존 `createQuery`를 통해 쿼리를 작성하는 방식은 쿼리 오타 등 에러는 런타임에 확인 가능
+* 하지만 네임드 쿼리는 실무에서 잘 사용하지 않는 경우가 많음
+  * 대신 `@Query` 애너테이션으로 `repository`에 쿼리(`JPQL`)를 직접 선언(정의)하는 방식으로 사용
+* 네임드 쿼리 호출
+  * ~~~
+    @Query(name = "Member.findByUserName")
+    List<Member> findByUserName(@Param("userName") final String userName);
+    ~~~
+  * JPQL에 네임드 파라미터 바인딩을 위하여 `@Param` 사용
+* 위 `findByUserName`은 네임드 쿼리를 호출하지 않고도 사용 가능
+  * ~~~
+    List<Member> findByUserName(@Param("userName") final String userName);
+    ~~~
+  1. Spring Data JPA가 해당 클래스에 네임드 쿼리를 찾아 실행
+  2. 네임드 쿼리가 없을 시 쿼리 메서드 작명 규칙으로 쿼리 생성하여 실행

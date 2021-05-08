@@ -119,4 +119,21 @@ class MemberRepositoryTest {
         // Assert
         assertThat(helloMembers.size()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("네임드 쿼리 테스트")
+    void findByUserName() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        final Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        final List<Member> findMembers = memberRepository.findByUserName("member1");
+        final Member findMember1 = findMembers.get(0);
+
+        // Assert
+        assertThat(findMember1).isEqualTo(member1);
+    }
 }

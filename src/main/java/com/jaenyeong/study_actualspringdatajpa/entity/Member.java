@@ -7,6 +7,10 @@ import javax.persistence.*;
 import static javax.persistence.FetchType.LAZY;
 
 @Entity
+@NamedQuery(
+    name = "Member.findByUserName",
+    query = "select m from Member m where m.userName = :userName"
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
