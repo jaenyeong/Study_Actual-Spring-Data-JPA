@@ -115,3 +115,11 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
 ### 주요 메서드
 * `save`, `delete`, `findById` 등 주요 공통 메서드 제공
   * `JpaRepository`는 대부분의 공통 메서드 제공
+
+### 쿼리 메서드
+* [문서 참조](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#jpa.query-methods.query-creation)
+* 메서드 네이밍에 따라 `Spring Data JPA`가 쿼리 메서드를 구현해 줌
+  * 파라미터 수에 따라 메서드명이 한없이 길어질 수 있음
+  * 일반적으로 파라미터를 `2~3개`까지만 사용하는 쿼리 메서드 구현
+* 엔티티의 필드명이 변경되면 반드시 쿼리 메서드명도 함께 변경해야 함
+  * 변경하지 않으면 애플리케이션을 시작할 때 에러 발생

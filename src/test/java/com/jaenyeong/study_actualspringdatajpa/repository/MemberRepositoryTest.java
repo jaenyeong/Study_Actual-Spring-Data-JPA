@@ -80,4 +80,43 @@ class MemberRepositoryTest {
         final long numberAfterDelete = memberRepository.count();
         assertThat(numberAfterDelete).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("findByUserNameAndAgeGreaterThan 쿼리 메서드 테스트")
+    void findByUserNameAndAgeGreaterThan() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        final Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        final List<Member> findMembers = memberRepository.findByUserNameAndAgeGreaterThan("member2", 15);
+
+        // Assert
+        final Member firstMember = findMembers.get(0);
+        assertThat(firstMember.getUserName()).isEqualTo("member2");
+        assertThat(firstMember.getAge()).isEqualTo(20);
+        assertThat(findMembers.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("쿼리 메서드 작성시 By 조건 테스트")
+    void findHelloBy() throws Exception {
+        // Act
+        final List<Member> helloMembers = memberRepository.findHelloBy();
+
+        // Assert
+        assertThat(helloMembers.size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("쿼리 메서드 작성시 Top3 조건 테스트")
+    void finTop3HelloBy() throws Exception {
+        // Act
+        final List<Member> helloMembers = memberRepository.findTop3HelloBy();
+
+        // Assert
+        assertThat(helloMembers.size()).isEqualTo(0);
+    }
 }

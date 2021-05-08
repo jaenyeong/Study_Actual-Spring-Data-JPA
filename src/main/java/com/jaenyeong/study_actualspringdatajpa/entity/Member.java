@@ -30,6 +30,11 @@ public class Member {
         this.userName = userName;
     }
 
+    public Member(final String userName, final int age) {
+        this.userName = userName;
+        this.age = age;
+    }
+
     public Member(final String userName, final int age, final Team team) {
         this.userName = userName;
         this.age = age;
