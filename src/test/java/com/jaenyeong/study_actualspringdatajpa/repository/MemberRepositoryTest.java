@@ -218,4 +218,25 @@ class MemberRepositoryTest {
         assertThat(findMember1).isEqualTo(member1);
         assertThat(findMember2).isEqualTo(member2);
     }
+
+    @Test
+    @DisplayName("쿼리별 반환 타입 테스트")
+    void queryReturnType() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        final Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        final List<Member> findMembers = memberRepository.findListByUserName("member1");
+        final Member findMember1 = memberRepository.findMemberByUserName("member1");
+        final Member optionalMember1 = memberRepository.findOptionalByUserName("member1")
+            .orElseGet(() -> new Member("Not Found", 99));
+
+        // Assert
+        assertThat(findMembers.get(0)).isEqualTo(member1);
+        assertThat(findMember1).isEqualTo(member1);
+        assertThat(optionalMember1).isEqualTo(member1);
+    }
 }

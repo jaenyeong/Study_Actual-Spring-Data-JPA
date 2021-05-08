@@ -175,3 +175,21 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
 @Query("select m from Member m where m.username in :userNames")
 List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 ~~~
+
+### 반환 타입
+* 다건 조회 시 컬렉션 반환
+  * `List<Member> findByUsername(String name);`
+  * 데이터가 없는 경우 `null`이 아닌 빈 리스트를 반환
+* 단건 조회 시
+  * 객체 반환
+    * `Member findByUsername(String name);`
+  * `Optional<T>` 반환
+    * `Optional<Member> findByUsername(String name);`
+
+#### 단건 조회 시 데이터가 없는 경우
+* `JPA`에서는 예외를 발생 시킴
+* `Spring Data JPA`에서는 `null`, 'empty List' 등을 반환하여 처리
+
+#### 단건 조회 시 데이터가 다수인 경우
+* `JPA`에서 발생한 `NonUniqueException` 예외를 `IncorrectResultSizeDataAccessException`으로 변경
+  * 하위 DB에서 발생된 예외를 `Spring` 레이어에서 추상화된 예외로 변경
