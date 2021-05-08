@@ -77,3 +77,14 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
   insert into member (user_name, id) values (?, ?)
   insert into member (user_name, id) values ('memberA', 1);
   ~~~
+
+### JPA 설정
+* `Project Structure`에서 `Facets` 경로
+  * `JPA`를 `Study_Actual-Spring-Data-JPA.main` 경로 설정 추가
+
+## 도메인(엔티티)
+* 멤버
+* 팀
+
+### 연관관계 로딩 확인
+* `*ToOne` 관계는 기본적으로 EAGER(즉시 로딩)이기 때문에 LAZY(지연 로딩)으로 변경
