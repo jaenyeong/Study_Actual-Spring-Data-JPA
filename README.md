@@ -161,3 +161,17 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
     @Query("select new com.jaenyeong.study_actualspringdatajpa.dto.MemberDto(m.id, m.userName, t.name) from Member m join m.team t")
     List<MemberDto> findUsersForMemberDto();
     ~~~
+
+### 파라미터 바인딩
+* 위치 기반
+  * `select m from Member m where m.userName = ?0`
+  * 실무에서 거의 사용되지 않음 (가독성, 유지보수 때문)
+    * 위치(순서)가 변경되면 버그가 생길 확률이 높음
+* 이름 기반
+  * `select m from Member m where m.userName = :userName`
+
+#### 컬렉션 파라미터 바인딩
+~~~
+@Query("select m from Member m where m.username in :userNames")
+List<Member> findByNames(@Param("userNames") Collection<String> userNames);
+~~~

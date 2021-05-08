@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -197,5 +198,24 @@ class MemberRepositoryTest {
         assertThat(findMember1.getId()).isEqualTo(member1.getId());
         assertThat(findMember1.getUserName()).isEqualTo(member1.getUserName());
         assertThat(findMember1.getTeamName()).isEqualTo(member1.getTeam().getName());
+    }
+
+    @Test
+    @DisplayName("컬렉션 파라미터 바인딩 쿼리 테스트")
+    void findByNames() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        final Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        final List<Member> userNameList = memberRepository.findByUserNames(Arrays.asList("member1", "member2"));
+        final Member findMember1 = userNameList.get(0);
+        final Member findMember2 = userNameList.get(1);
+
+        // Assert
+        assertThat(findMember1).isEqualTo(member1);
+        assertThat(findMember2).isEqualTo(member2);
     }
 }
