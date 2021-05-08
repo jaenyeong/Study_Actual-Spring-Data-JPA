@@ -136,4 +136,21 @@ class MemberRepositoryTest {
         // Assert
         assertThat(findMember1).isEqualTo(member1);
     }
+
+    @Test
+    @DisplayName("@Query JPQL 테스트")
+    void findUser() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        final Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        final List<Member> findMembers = memberRepository.findUserByQuery("member1", 10);
+        final Member findMember1 = findMembers.get(0);
+
+        // Assert
+        assertThat(findMember1).isEqualTo(member1);
+    }
 }

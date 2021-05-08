@@ -142,3 +142,10 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
     ~~~
   1. Spring Data JPA가 해당 클래스에 네임드 쿼리를 찾아 실행
   2. 네임드 쿼리가 없을 시 쿼리 메서드 작명 규칙으로 쿼리 생성하여 실행
+
+### `@Query` 애너테이션으로 `repository`에 쿼리 정의
+* ~~~
+  @Query("select m from Member m where m.userName = :userName and m.age = :age")
+  List<Member> findUserByQuery(@Param("userName") final String userName, @Param("age") final int age);
+  ~~~
+* 애플리케이션 로딩 시점에 쿼리 오타 등 에러를 잡아 줌
