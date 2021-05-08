@@ -43,3 +43,26 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%8D%B0%EC%9D%B4%E
   * 그 후부터 접속할 때 URL을 `jdbc:h2:tcp://localhost/~/datajpa`으로 설정하여 접속
     * 최초 URL은 파일로 접속하는 방식으로 잠금처리 되어 여러 곳에서 동시에 접속(접근)할 수 없음
 * root 경로에 datajpa.mv.db 파일 생성 여부 확인
+
+### application.properties 파일 설정
+* `application.properties` 파일 확장자를 `yml`로 변경
+* ~~~
+  spring:
+    datasource:
+      url: jdbc:h2:tcp://localhost/~/datajpa
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+
+    jpa:
+      hibernate:
+        ddl-auto: create
+      properties:
+        hibernate:
+    #     show_sql: true
+        format_sql: true
+
+  logging.level:
+    org.hibernate.SQL: debug
+  #  org.hibernate.type: trace
+  ~~~
