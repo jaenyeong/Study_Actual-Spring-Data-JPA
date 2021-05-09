@@ -1,6 +1,7 @@
 package com.jaenyeong.study_actualspringdatajpa.repository;
 
 import com.jaenyeong.study_actualspringdatajpa.entity.Member;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,11 @@ class MemberJpaRepositoryTest {
 
     @PersistenceContext
     private EntityManager em;
+
+    @BeforeEach
+    public void before() {
+        memberJpaRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("회원 테스트")

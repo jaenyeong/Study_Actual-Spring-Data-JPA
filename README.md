@@ -249,3 +249,32 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
     * 기본 값은 `false`
   * 실행하지 않으면 영속성 컨텍스트 안에 예전 데이터가 남아 데이터 부정합 발생할 수 있음
     * 영속성 컨텍스트에 캐싱된 데이터가 없을 때 하는 것이 좋고 벌크 연산 실행 직후 초기화 할 것
+
+### `@EntityGraph`
+* `JPA` 표준 스펙
+  * `fetch join`을 편리하게 사용할 수 있음
+  * 따라서 지연 로딩과 `fetch join`을 명확히 이해해야 함
+  * 복잡한 쿼리라면 `JPQL`, 간단한 쿼리라면 `@EntityGraph`를 통해 `fetch join` 처리하기도 함
+* 지연 로딩
+  * 영속성 컨텍스트가 비어져 있을 때 사용하지 않는 연관관계 객체는 프록시로 대체
+* 지연 로딩을 하게 되면 `N + 1` 문제 발생할 수 있음
+  * 연관관계 데이터 수를 기준으로 쿼리가 발생함
+  * 이를 해결하기 위해 `JPQL`을 사용해야 하는 것이 번거롭기 때문에 `EntityGraph`를 사용
+* `@EntityGraph`는 내부적으로 `fetch join`을 사용하는 것과 같음
+* ~~~
+  @Override
+  @EntityGraph(attributePaths = {"team"})
+  List<Member> findAll();
+  ~~~
+* `@NamedEntityGraph`
+  * ~~~
+    @NamedEntityGraph(name = "Member.all", attributeNodes = @NamedAttributeNode("team"))
+    public class Member {
+    }
+    ~~~
+  * ~~~
+    public interface MemberRepository extends JpaRepository<Member, Long> {
+        @EntityGraph()
+        List<Member> findEntityGraphByUserName(@Param("userName") final String userName);
+    }
+    ~~~

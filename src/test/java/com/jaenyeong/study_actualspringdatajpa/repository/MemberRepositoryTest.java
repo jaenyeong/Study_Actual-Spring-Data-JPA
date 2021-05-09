@@ -3,6 +3,7 @@ package com.jaenyeong.study_actualspringdatajpa.repository;
 import com.jaenyeong.study_actualspringdatajpa.dto.MemberDto;
 import com.jaenyeong.study_actualspringdatajpa.entity.Member;
 import com.jaenyeong.study_actualspringdatajpa.entity.Team;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +31,15 @@ class MemberRepositoryTest {
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @BeforeEach
+    public void before() {
+        memberRepository.deleteAll();
+        teamRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("회원 테스트")
@@ -414,7 +426,6 @@ class MemberRepositoryTest {
         memberRepository.save(new Member("member9", 30));
 
         final List<Member> members = memberRepository.findByUserName("member9");
-        final Member findMember = members.get(0);
 
         final int age = 20;
 
@@ -455,5 +466,138 @@ class MemberRepositoryTest {
         assertThat(numberOfUpdateMember).isEqualTo(5);
         assertThat(findMember.getAge()).isEqualTo(30);
         assertThat(afterFindMember.getAge()).isEqualTo(31);
+    }
+
+    @Test
+    @DisplayName("지연 로딩 테스트")
+    void teamLazyLoading() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        final Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+
+        // Act
+        em.flush();
+        em.clear();
+
+        final List<Member> members = memberRepository.findAll();
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        assertThat(findMember.getTeam().getClass().getName()).contains("Proxy");
+        assertThat(findMember.getTeam().getName()).contains("teamA");
+    }
+
+    @Test
+    @DisplayName("페치 조인 테스트")
+    void teamFetchJoin() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        final Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+
+        // Act
+        em.flush();
+        em.clear();
+
+        final List<Member> members = memberRepository.findFetchJoin();
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        assertThat(findMember.getTeam().getClass().getName()).doesNotContain("Proxy");
+        assertThat(findMember.getTeam().getName()).contains("teamA");
+    }
+
+    @Test
+    @DisplayName("엔티티 그래프 테스트")
+    void teamEntityGraph() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        final Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+
+        // Act
+        em.flush();
+        em.clear();
+
+        final List<Member> members = memberRepository.findMemberEntityGraph();
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        // @EntityGraph(attributePaths = {"team"}) 를 사용하면 fetch join과 동일
+        assertThat(findMember.getTeam().getClass().getName()).doesNotContain("Proxy");
+        assertThat(findMember.getTeam().getName()).contains("teamA");
+    }
+
+    @Test
+    @DisplayName("쿼리 메서드에 엔티티 그래프 테스트")
+    void teamQueryMethodEntityGraph() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        final Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        final Member member1 = new Member("member1", 10, teamA);
+        final Member member2 = new Member("member2", 20, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        em.flush();
+        em.clear();
+
+        final List<Member> members = memberRepository.findEntityGraphByUserName("member1");
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        // @EntityGraph(attributePaths = {"team"}) 를 사용하면 fetch join과 동일
+        assertThat(findMember.getTeam().getClass().getName()).doesNotContain("Proxy");
+        assertThat(findMember.getTeam().getName()).contains("teamA");
+
+        assertThat(members).hasSize(1);
+        assertThat(findMember.getId()).isEqualTo(member1.getId());
+    }
+
+    @Test
+    @DisplayName("쿼리 메서드에 네임드 엔티티 그래프 테스트")
+    void teamQueryMethodNamedEntityGraph() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        final Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        final Member member1 = new Member("member1", 10, teamA);
+        final Member member2 = new Member("member2", 20, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // Act
+        em.flush();
+        em.clear();
+
+        final List<Member> members = memberRepository.findNamedEntityGraphByUserName("member1");
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        // @EntityGraph(attributePaths = {"team"})를 사용하면 fetch join과 동일
+        assertThat(findMember.getTeam().getClass().getName()).doesNotContain("Proxy");
+        assertThat(findMember.getTeam().getName()).contains("teamA");
+
+        assertThat(members).hasSize(1);
+        assertThat(findMember.getId()).isEqualTo(member1.getId());
     }
 }

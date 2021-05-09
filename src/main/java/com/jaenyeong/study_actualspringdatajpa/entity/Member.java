@@ -17,6 +17,7 @@ import static javax.persistence.FetchType.LAZY;
 // ToString 안에 team 필드 삽입하고 Team클래스의 toString에도 members 필드를 삽입하게 되면 무한루프 발생하게 되니 주의
 // 따라서 가급적 연관관계 필드는 넣지 않는 것이 좋음
 @ToString(of = {"id", "userName", "age"})
+@NamedEntityGraph(name = "Member.all", attributeNodes = @NamedAttributeNode("team"))
 public class Member {
     @Id
     @GeneratedValue
