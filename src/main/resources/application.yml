@@ -11,6 +11,8 @@ spring:
       ddl-auto: create
     properties:
       hibernate:
+        # 다른 DB 벤더 설정
+#        dialect: org.hibernate.dialect.Oracle10gDialect
         # JPA가 실행하는 쿼리를 콘솔에 로깅
 #        show_sql: true
         # 쿼리를 보기 쉬운 포맷으로 출력

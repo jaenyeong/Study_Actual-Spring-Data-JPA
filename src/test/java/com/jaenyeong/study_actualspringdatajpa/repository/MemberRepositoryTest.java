@@ -7,6 +7,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -238,5 +242,160 @@ class MemberRepositoryTest {
         assertThat(findMembers.get(0)).isEqualTo(member1);
         assertThat(findMember1).isEqualTo(member1);
         assertThat(optionalMember1).isEqualTo(member1);
+    }
+
+    @Test
+    @DisplayName("페이징 테스트")
+    void page() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+        memberRepository.save(new Member("member6", 10));
+        memberRepository.save(new Member("member7", 10));
+        memberRepository.save(new Member("member8", 10));
+        memberRepository.save(new Member("member9", 10));
+
+        final int age = 10;
+
+        final int startPage = 0;
+        final int pageSize = 3;
+        final PageRequest pageRequest = PageRequest.of(startPage, pageSize, Sort.by(Sort.Direction.DESC, "userName"));
+
+        // Act
+        final Page<Member> membersPage = memberRepository.findPageByAge(age, pageRequest);
+        final List<Member> content = membersPage.getContent();
+
+        // Assert
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(membersPage.getTotalElements()).isEqualTo(9);
+        assertThat(membersPage.getNumber()).isEqualTo(0);
+        assertThat(membersPage.getTotalPages()).isEqualTo(3);
+        assertThat(membersPage.isFirst()).isTrue();
+        assertThat(membersPage.hasNext()).isTrue();
+    }
+
+    @Test
+    @DisplayName("슬라이싱 테스트")
+    void slice() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+        memberRepository.save(new Member("member6", 10));
+        memberRepository.save(new Member("member7", 10));
+        memberRepository.save(new Member("member8", 10));
+        memberRepository.save(new Member("member9", 10));
+
+        final int age = 10;
+
+        final int startPage = 0;
+        final int pageSize = 3;
+        final PageRequest pageRequest = PageRequest.of(startPage, pageSize, Sort.by(Sort.Direction.DESC, "userName"));
+
+        // Act
+        final Slice<Member> membersSlice = memberRepository.findSliceByAge(age, pageRequest);
+
+        // Assert
+        assertThat(membersSlice.getNumber()).isEqualTo(0);
+        assertThat(membersSlice.isFirst()).isTrue();
+        assertThat(membersSlice.hasNext()).isTrue();
+    }
+
+    @Test
+    @DisplayName("리스트 테스트")
+    void list() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+        memberRepository.save(new Member("member6", 10));
+        memberRepository.save(new Member("member7", 10));
+        memberRepository.save(new Member("member8", 10));
+        memberRepository.save(new Member("member9", 10));
+
+        final int age = 10;
+
+        final int startPage = 0;
+        final int pageSize = 3;
+        final PageRequest pageRequest = PageRequest.of(startPage, pageSize, Sort.by(Sort.Direction.DESC, "userName"));
+
+        // Act
+        final List<Member> members = memberRepository.findListByAge(age, pageRequest);
+
+        // Assert
+        assertThat(members.size()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("count 분리 테스트")
+    void separateCountQuery() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+        memberRepository.save(new Member("member6", 10));
+        memberRepository.save(new Member("member7", 10));
+        memberRepository.save(new Member("member8", 10));
+        memberRepository.save(new Member("member9", 10));
+
+        final int startPage = 0;
+        final int pageSize = 3;
+        final PageRequest pageRequest = PageRequest.of(startPage, pageSize, Sort.by(Sort.Direction.DESC, "userName"));
+
+        // Act
+        final Page<Member> membersPage = memberRepository.findMemberAllCountBy(pageRequest);
+        final List<Member> content = membersPage.getContent();
+
+        // Assert
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(membersPage.getTotalElements()).isEqualTo(9);
+        assertThat(membersPage.getNumber()).isEqualTo(0);
+        assertThat(membersPage.getTotalPages()).isEqualTo(3);
+        assertThat(membersPage.isFirst()).isTrue();
+        assertThat(membersPage.hasNext()).isTrue();
+    }
+
+    @Test
+    @DisplayName("dto 변환 테스트")
+    void pageDto() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+        memberRepository.save(new Member("member6", 10));
+        memberRepository.save(new Member("member7", 10));
+        memberRepository.save(new Member("member8", 10));
+        memberRepository.save(new Member("member9", 10));
+
+        final int age = 10;
+
+        final int startPage = 0;
+        final int pageSize = 3;
+        final PageRequest pageRequest = PageRequest.of(startPage, pageSize, Sort.by(Sort.Direction.DESC, "userName"));
+
+        // Act
+        final Page<Member> membersPage = memberRepository.findPageByAge(age, pageRequest);
+        final Page<MemberDto> memberDtos = membersPage.map(member -> new MemberDto(member.getId(), member.getUserName(), "test team name"));
+
+        final List<Member> content = membersPage.getContent();
+
+        // Assert
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(memberDtos.getTotalElements()).isEqualTo(9);
+        assertThat(memberDtos.getNumber()).isEqualTo(0);
+        assertThat(memberDtos.getTotalPages()).isEqualTo(3);
+        assertThat(memberDtos.isFirst()).isTrue();
+        assertThat(memberDtos.hasNext()).isTrue();
     }
 }

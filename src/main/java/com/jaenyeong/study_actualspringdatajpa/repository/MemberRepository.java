@@ -2,6 +2,9 @@ package com.jaenyeong.study_actualspringdatajpa.repository;
 
 import com.jaenyeong.study_actualspringdatajpa.dto.MemberDto;
 import com.jaenyeong.study_actualspringdatajpa.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,4 +39,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Member findMemberByUserName(final String userName);
 
     Optional<Member> findOptionalByUserName(final String userName);
+
+    Page<Member> findPageByAge(final int age, final Pageable pageable);
+
+    Slice<Member> findSliceByAge(final int age, final Pageable pageable);
+
+    List<Member> findListByAge(final int age, final Pageable pageable);
+
+    @Query(value = "select m from Member m left join m.team t", countQuery = "select count(m.userName) from Member m")
+    Page<Member> findMemberAllCountBy(final Pageable pageable);
 }

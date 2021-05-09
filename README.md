@@ -193,3 +193,49 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 #### 단건 조회 시 데이터가 다수인 경우
 * `JPA`에서 발생한 `NonUniqueException` 예외를 `IncorrectResultSizeDataAccessException`으로 변경
   * 하위 DB에서 발생된 예외를 `Spring` 레이어에서 추상화된 예외로 변경
+
+### 순수 `JPA` 페이징과 정렬
+* 직접 구현할 때는 페이징 계산 로직도 따로 추가해야 함 
+* 다른 DB 벤더의 쿼리 또한 무관
+  * `application.yml`에서 다른 DB 벤더 설정
+    * ~~~
+      spring:
+        jpa:      
+          properties:
+            hibernate:
+              dialect: org.hibernate.dialect.Oracle10gDialect
+      ~~~
+
+### `Spring Data JPA` 페이징과 정렬
+* 정렬
+  * `org.springframework.data.domain.Sort`
+* 페이징
+  * `org.springframework.data.domain.Pageable`
+
+#### 특별한 반환 타입
+* 반환 타입을 기준으로 쿼리가 결정됨
+  * 추가 `count` 쿼리 결과를 포함하는 페이징
+    * `org.springframework.data.domain.Page`
+    * 콘텐츠 쿼리와 토탈 카운트 쿼리 모두 전송
+  * 추가 `count` 쿼리 없이 다음 페이지만 확인 가능 (내부적으로 `limit + 1` 조회)
+    * `org.springframework.data.domain.Slice`
+    * 콘텐츠 쿼리만 전송 (토탈 카운트 쿼리 X)
+  * 추가 `count` 쿼리 없이 결과만 반환
+    * `List` 자바 컬렉션
+
+#### `totalCount`
+* 실무에서는 조인 등 복잡한 쿼리 상황(방대한 데이터의 양)으로 인해 성능 등 이슈 존재
+* 그대로 쿼리를 호출하면 `count` 쿼리에서도 조인을 함
+  * ~~~
+    @Query(value = “select m from Member m left join m.team t”)
+    Page<Member> findMemberAllCountBy(Pageable pageable);
+    ~~~
+* 이때 `count` 쿼리를 분리할 수 있음
+  * ~~~
+    @Query(value = “select m from Member m left join m.team t”, countQuery = “select count(m.userName) from Member m”)
+    Page<Member> findMemberAllCountBy(Pageable pageable);
+    ~~~
+
+#### 복잡한 정렬
+* 실무에서 복잡한 정렬 조건이 발생하면 `PageRequest`에 `Sort.by(...)` 만으로 정렬이 어려울 수 있음
+  * 이때는 정렬을 빼고 `@Query`에 정렬 `JPQL`을 직접 작성하는 것이 나을 수 있음
