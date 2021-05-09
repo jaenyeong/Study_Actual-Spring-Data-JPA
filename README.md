@@ -278,3 +278,31 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
         List<Member> findEntityGraphByUserName(@Param("userName") final String userName);
     }
     ~~~
+
+### JPA Hint & Lock
+* JPA Hint
+  * JPA 구현체(일반적으로 하이버네이트)에게 제공하는 쿼리 힌트
+  * `@QueryHint`는 `JPA`가 아닌 `Hibernate` 구현체가 제공하는 기능
+  * `@QueryHints`는 `JPA`에서 구현체에게 힌트를 넘기는 기능
+* `JPA`의 변경감지(dirty checking) 기능의 단점
+  * 기능이 동작하기 위해선 원본 데이터와 수정본 데이터를 가지고 있어야 함
+  * 따라서 `readOnly` 속성의 쿼리를 실행시키려 해도 두가지 종류의 데이터를 갖고 있어 비효율적
+  * 이때 `readOnly` 속성 힌트를 사용하여 최적화
+* 사용 형태
+  * ~~~
+    @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
+    Member findReadOnlyByUserName(final String userName);
+    ~~~
+  * `@QueryHint(name = "org.hibernate.readOnly", value = "true")` 형태는 문자열을 넘겨 받음
+    * 이는 `JPA`로부터 편하게 넘겨 받기 위한 것으로 보임
+* Lock
+  * `JPA`에서 Optimistic lock(낙관적 락), Pessimistic lock(비관적 락) 등 기능 제공
+  * LockModeType은 `javax.persistence` 패키지
+  * DB 벤더에 따라 동작 방식이 달라짐
+  * 쿼리 형태
+    ~~~
+    select member0_.member_id as member_i1_0_, member0_.age as age2_0_, member0_.team_id as team_id4_0_, member0_.user_name as user_nam3_0_ from member member0_ where member0_.user_name='member1' for update;
+    ~~~
+  * 실시간 트래픽이 많은 서비스에서는 가급적 비관적 락을 걸지 않는 것을 권함
+    * 낙관적 락(실제 잠금이 아닌 버저닝을 활용한 방식) 사용하거나 잠금 처리를 우회할 수 있는 방식을 고려
+    * 하지만 결제와 같은 기능은 비관적 락을 활용하기도 함

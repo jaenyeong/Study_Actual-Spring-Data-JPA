@@ -600,4 +600,61 @@ class MemberRepositoryTest {
         assertThat(members).hasSize(1);
         assertThat(findMember.getId()).isEqualTo(member1.getId());
     }
+
+    @Test
+    @DisplayName("JPA 쿼리 힌트 테스트")
+    void queryHint() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        // Act
+        final Member findMember = memberRepository.findById(member1.getId())
+            .orElseGet(() -> new Member("Not Found", 99));
+        findMember.setUserName("member2");
+        em.flush();
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member2");
+    }
+
+    @Test
+    @DisplayName("JPA ReadOnly 쿼리 힌트 테스트")
+    void readOnlyQueryHint() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        // Act
+        final Member savedMember = memberRepository.findReadOnlyById(member1.getId())
+            .orElseGet(() -> new Member("Not Found", 99));
+        savedMember.setUserName("member2");
+        // flush를 해도 업데이트 쿼리가 전송되지 않음
+        em.flush();
+        em.clear();
+
+        // Assert
+        final Member findMember = memberRepository.findById(member1.getId())
+            .orElseGet(() -> new Member("Not Found", 99));
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+    }
+
+    @Test
+    @DisplayName("JPA lock 힌트 테스트")
+    void lock() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        // Act
+        final List<Member> members = memberRepository.findLockByUserName("member1");
+
+        // Assert
+    }
 }
