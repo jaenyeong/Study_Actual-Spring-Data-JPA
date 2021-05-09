@@ -398,4 +398,62 @@ class MemberRepositoryTest {
         assertThat(memberDtos.isFirst()).isTrue();
         assertThat(memberDtos.hasNext()).isTrue();
     }
+
+    @Test
+    @DisplayName("벌크성 쿼리 테스트")
+    void bulkUpdate() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 11));
+        memberRepository.save(new Member("member3", 12));
+        memberRepository.save(new Member("member4", 13));
+        memberRepository.save(new Member("member5", 20));
+        memberRepository.save(new Member("member6", 21));
+        memberRepository.save(new Member("member7", 22));
+        memberRepository.save(new Member("member8", 23));
+        memberRepository.save(new Member("member9", 30));
+
+        final List<Member> members = memberRepository.findByUserName("member9");
+        final Member findMember = members.get(0);
+
+        final int age = 20;
+
+        // Act
+        final int numberOfUpdateMember = memberRepository.bulkAgePlus(age);
+
+        // Assert
+        assertThat(numberOfUpdateMember).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("벌크 연산시 영속성 컨텍스트 테스트")
+    void persistenceContextWhenBulkUpdate() throws Exception {
+        // Arrange
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 11));
+        memberRepository.save(new Member("member3", 12));
+        memberRepository.save(new Member("member4", 13));
+        memberRepository.save(new Member("member5", 20));
+        memberRepository.save(new Member("member6", 21));
+        memberRepository.save(new Member("member7", 22));
+        memberRepository.save(new Member("member8", 23));
+        memberRepository.save(new Member("member9", 30));
+
+        final int age = 20;
+
+        // Act
+        final List<Member> members = memberRepository.findByUserName("member9");
+        final Member findMember = members.get(0);
+        // Assert
+        assertThat(findMember.getAge()).isEqualTo(30);
+
+        // Act
+        final int numberOfUpdateMember = memberRepository.bulkAgePlus(age);
+        final List<Member> afterMembers = memberRepository.findByUserName("member9");
+        final Member afterFindMember = afterMembers.get(0);
+        // Assert
+        assertThat(numberOfUpdateMember).isEqualTo(5);
+        assertThat(findMember.getAge()).isEqualTo(30);
+        assertThat(afterFindMember.getAge()).isEqualTo(31);
+    }
 }

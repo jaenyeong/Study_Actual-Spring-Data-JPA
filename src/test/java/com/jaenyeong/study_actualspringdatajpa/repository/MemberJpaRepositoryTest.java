@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MemberJpaRepositoryTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Test
     @DisplayName("회원 테스트")
@@ -144,6 +149,63 @@ class MemberJpaRepositoryTest {
         // Assert
         assertThat(pagingMembers.size()).isEqualTo(3);
         assertThat(totalCount).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("벌크성 쿼리 테스트")
+    void bulkUpdate() throws Exception {
+        // Arrange
+        memberJpaRepository.save(new Member("member1", 10));
+        memberJpaRepository.save(new Member("member2", 11));
+        memberJpaRepository.save(new Member("member3", 12));
+        memberJpaRepository.save(new Member("member4", 13));
+        memberJpaRepository.save(new Member("member5", 20));
+        memberJpaRepository.save(new Member("member6", 21));
+        memberJpaRepository.save(new Member("member7", 22));
+        memberJpaRepository.save(new Member("member8", 23));
+        memberJpaRepository.save(new Member("member9", 30));
+
+        final int age = 20;
+
+        // Act
+        final int numberOfUpdateMember = memberJpaRepository.bulkAgePlus(age);
+
+        // Assert
+        assertThat(numberOfUpdateMember).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("벌크 연산시 영속성 컨텍스트 테스트")
+    void persistenceContextWhenBulkUpdate() throws Exception {
+        // Arrange
+        memberJpaRepository.save(new Member("member1", 10));
+        memberJpaRepository.save(new Member("member2", 11));
+        memberJpaRepository.save(new Member("member3", 12));
+        memberJpaRepository.save(new Member("member4", 13));
+        memberJpaRepository.save(new Member("member5", 20));
+        memberJpaRepository.save(new Member("member6", 21));
+        memberJpaRepository.save(new Member("member7", 22));
+        memberJpaRepository.save(new Member("member8", 23));
+        memberJpaRepository.save(new Member("member9", 30));
+
+        final int age = 20;
+
+        // Act
+        final int numberOfUpdateMember = memberJpaRepository.bulkAgePlus(age);
+        final List<Member> members = memberJpaRepository.findByUserName("member9");
+        final Member findMember = members.get(0);
+        // Assert
+        assertThat(numberOfUpdateMember).isEqualTo(5);
+        assertThat(findMember.getAge()).isEqualTo(30);
+
+        // Act
+        em.flush();
+        em.clear();
+        final List<Member> afterMembers = memberJpaRepository.findByUserName("member9");
+        final Member afterFindMember = afterMembers.get(0);
+        // Assert
+        assertThat(findMember.getAge()).isEqualTo(30);
+        assertThat(afterFindMember.getAge()).isEqualTo(31);
     }
 }
 

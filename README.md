@@ -239,3 +239,13 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 #### 복잡한 정렬
 * 실무에서 복잡한 정렬 조건이 발생하면 `PageRequest`에 `Sort.by(...)` 만으로 정렬이 어려울 수 있음
   * 이때는 정렬을 빼고 `@Query`에 정렬 `JPQL`을 직접 작성하는 것이 나을 수 있음
+
+### 벌크성 수정 쿼리
+* `@Modifying` 애너테이션 태깅하면 `executeUpdate();` 실행하여 수정 여부를 알려줌
+  * 태깅을 하지 않으면 `getResultList();` 등을 실행하게 되어 예외 발생
+    * `org.hibernate.hql.internal.QueryExecutionRequestException: Not supported for DML operations`
+* 벌크 연산을 실행하고 나서 영속성 컨텍스트 초기화
+  * `@Modifying(clearAutomatically = true)`
+    * 기본 값은 `false`
+  * 실행하지 않으면 영속성 컨텍스트 안에 예전 데이터가 남아 데이터 부정합 발생할 수 있음
+    * 영속성 컨텍스트에 캐싱된 데이터가 없을 때 하는 것이 좋고 벌크 연산 실행 직후 초기화 할 것
