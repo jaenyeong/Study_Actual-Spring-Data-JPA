@@ -525,3 +525,73 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 * 실무에서는 이렇게 간단한 경우가 없어 자주 사용되진 않음
   * 도메인 클래스 컨버터로 엔티티를 파라미터로 받으면, 이 엔티티는 단순 조회용으로만 사용할 것
   * 트랜잭션이 없는 범위에서 엔티티를 조회했으므로, 엔티티를 변경해도 DB에 반영되지 않음
+
+#### 페이징과 정렬
+* `Pageable` 인터페이스로 파라미터 받음
+  * 해당 인터페이스는 실제로 `org.springframework.data.domain.PageRequest` 객체 생성하여 파라미터 바인딩 처리
+* 요청 예시 (`/members?page=0&size=3&sort=id,desc&sort=username,desc`)
+  * `localhost:8080/members?page=0&size=3&sort=id,desc&sort=userName,desc`
+    * page: 현재 페이지, 0부터 시작
+    * size: 한 페이지에 노출할 데이터 건수
+    * sort: 정렬 조건을 정의
+      * 예) 정렬 속성, 정렬 속성...(`ASC` | `DESC`), 정렬 방향을 변경하고 싶으면 sort 파라미터 추가 (`asc` 생략 가능)
+
+##### 기본 설정
+* 전체(글로벌: 스프링 부트) `application.yml` 파일에 설정
+  ~~~
+  spring:
+    data:
+      web:
+        pageable:
+          # 기본 페이지 사이즈
+          default-page-size: 10
+          # 최대 페이지 사이즈
+          max-page-size: 2000
+  ~~~
+* 개별(메서드) 설정
+  ~~~
+  @GetMapping("/members")
+  public Page<Member> list(@PageableDefault(size = 5, sort = "userName", direction = Sort.Direction.DESC) final Pageable pageable) {
+      return memberRepository.findAll(pageable);
+  }
+  ~~~
+
+##### 접두사
+* 페이징 정보가 둘 이상이면 접두사로 구분
+* `@Qualifier` 애너테이션에 접두사 추가 `{접두사명}_xxx`
+  * 요청 예시
+    * `/members?member_page=0&order_page=1`과 같은 형태로 요청
+    ~~~
+    @GetMapping("/members/v2")
+    public Page<Member> list(@Qualifier("member") final Pageable memberPageable, @Qualifier("order") final Pageable orderPageable) {
+        return memberRepository.findAll(memberPageable);
+    }
+    ~~~
+
+##### `Page` 내용을 `DTO`로 변환
+* `API` 등과 같이 외부에 엔티티를 그대로 노출하지 말고 `DTO`로 변환하여 반환할 것
+* `Page`는 `map()`을 통해 데이터 변환 기능 제공
+  ~~~
+  @GetMapping("/members/v3")
+  public Page<MemberDto> memberDtoList(final Pageable pageable) {
+      return memberRepository.findAll(pageable)
+          .map(MemberDto::new);
+  }
+  ~~~
+
+##### `Page` 1부터 시작
+* `Spring Data`는 기본적으로 `Page`를 0부터 시작
+* 1부터 시작하려면?
+  1. 첫번째 방법은 직접 구현하여 처리
+     * `Pageable`, `Page`를 파라미터와 응답 값으로 사용하지 않고, 직접 클래스를 만들어서 처리
+     * `PageRequest(Pageable 구현체)`를 생성해서 리포지토리에 전달
+     * 응답값 또한 `Page` 대신 직접 만들어 제공
+  2. 두번째 방법은 `application.yml` 파일에서 설정
+     ~~~
+     spring:
+       data:
+         web:
+           one-indexed-parameters: true
+     ~~~
+     * 해당 방법은 웹에서 `page` 파라미터를 `-1`로 설정할 뿐 나머지 데이터는 `0` 부터 시작하는 것으로 계산된 것을 그대로 사용
+     * 따라서 응답값 `page`에 모두 `0` 페이지 인덱스를 사용하는데 한계가 있음

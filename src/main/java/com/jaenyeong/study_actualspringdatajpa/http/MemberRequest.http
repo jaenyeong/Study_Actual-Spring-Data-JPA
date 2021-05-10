@@ -1,0 +1,9 @@
+#GET localhost:8080/members/v1
+
+GET localhost:8080/members/v1?page=2&size=3
+
+#GET localhost:8080/members/v1?page=0&size=3&sort=id,desc&sort=userName,desc
+
+#GET localhost:8080/members/v2?member_page=0&order_page=1
+
+#GET localhost:8080/members/v3
