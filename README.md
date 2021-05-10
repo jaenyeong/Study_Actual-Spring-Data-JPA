@@ -595,3 +595,47 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
      ~~~
      * 해당 방법은 웹에서 `page` 파라미터를 `-1`로 설정할 뿐 나머지 데이터는 `0` 부터 시작하는 것으로 계산된 것을 그대로 사용
      * 따라서 응답값 `page`에 모두 `0` 페이지 인덱스를 사용하는데 한계가 있음
+
+### `Spring Data JPA` 분석
+
+#### `Spring Data JPA` 구현체 분석
+* `Spring Data JPA`가 제공하는 공통 인터페이스 구현체
+  * `org.springframework.data.jpa.repository.support.SimpleJpaRepository`
+  * `@Repository` 역할
+    * 스프링 빈을 컴포넌트로 등록
+    * `JPA`, `JDBC` 등 영속성 계층 예외를 스프링에서 사용 가능한(추상화 된) 예외로 변경 시켜줌
+* `@Transactional`
+  * `Spring Data JPA`의 모든 기능(데이터 처리)은 트랜잭션 내에서 시작
+  * `service` 계층 트랜잭션 안에서 호출되면 이어서 실행, 트랜잭션이 없었다면 트랜잭션을 새로 시작
+    * 따라서 트랜잭션 없이도 `repository`의 트랜잭션으로 데이터 처리가 가능
+  * `repository`에 `@Transactional(readOnly = true)` 태깅되어 있음
+    * 필요에 따라 트랜잭션 오버라이딩
+    * `@Transactional(readOnly = true)`는 `flush`를 생략, 약간의 성능 향상을 얻을 수 있음
+* `save`
+  * 새로운 엔티티면 저장(`persist`)하고 아니면 병합(`merge`)
+    * `merge`의 단점은 DB `select`를 한 번 수행하는 것
+    * `merge`는 데이터 변경 목적이 아닌 준영속 상태 엔티티를 영속 상태로 변환할 목적으로 사용해야 함
+
+#### 새로운 엔티티를 구별하는 방법
+* 새로운 엔티티를 판단하는 기본 전략
+  * 식별자가 객체일 때 `null`로 판단
+  * 식별자가 자바 기본 프리미티브 타입(`long`)일 때 `0`으로 판단
+  * `Persistable` 인터페이스를 구현해서 판단 로직 변경 가능
+    * 해당 인터페이스를 구현하는 경우 `isNew()` 메서드를 통해 새로운 엔티티인지 판단
+    ~~~
+    package org.springframework.data.domain;
+    public interface Persistable<ID> {
+        ID getId();
+        boolean isNew();
+    }
+    ~~~
+
+> 식별자 생성 전략이 `@GenerateValue`인 경우
+> * `save` 시점에 식별자가 없기 때문에 새로운 엔티티로 식별하여 저장
+> 
+> 식별자 생성 전략 없이 `@Id`만 사용해 직접 할당하는 경우
+> * 식별자가 있는 상태로 `save` 호출, `merge`가 호출됨
+> * 하지만 `merge`는  DB `select`를 호출해 값을 읽고 데이터 유무를 판단하여 처리하기 때문에 비효율적
+> * 따라서 `Persistable`를 사용해 새로운 엔티티인지 확인하는 것이 효과적
+> * 엔티티 등록 시간(`@CreatedDate`)을 조합하면 편리하게 사용 가능
+>   * 값의 유무로 새로운 엔티티인지 판단함
