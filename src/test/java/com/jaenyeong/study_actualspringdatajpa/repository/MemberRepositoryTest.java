@@ -822,4 +822,32 @@ class MemberRepositoryTest {
         assertThat(userName5.getUserName()).isEqualTo("member1");
         assertThat(userName5.getTeam().getName()).isEqualTo("teamA");
     }
+
+    @Test
+    @DisplayName("네이티브 쿼리 테스트")
+    void nativeQuery() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
+
+        final Member member1 = new Member("member1", 11, teamA);
+        final Member member2 = new Member("member2", 12, teamA);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        // Act
+        final Member findMember = memberRepository.findByNativeQuery("member1");
+
+        final Page<MemberProjection> membersPage = memberRepository.findByNativeProjection(PageRequest.of(0, 10));
+        final List<MemberProjection> members = membersPage.getContent();
+        final MemberProjection memberProjection = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        assertThat(memberProjection.getUserName()).isEqualTo("member1");
+        assertThat(memberProjection.getTeamName()).isEqualTo("teamA");
+    }
 }

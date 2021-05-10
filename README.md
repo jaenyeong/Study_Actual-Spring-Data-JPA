@@ -832,3 +832,48 @@ public class UserNameProjectionDto {
 * 프로젝션 대상이 `Root` 엔티티면 효과적이지만 엔티티가 두 개 이상(`JOIN` 사용)이면 `JPQL SELECT` 최적화가 안됨
   * 실무의 복잡한 쿼리를 해결하기에는 한계가 있기 때문에 단순한 상황에만 사용
 * 실무에서는 `QueryDSL` 사용하길 권장
+
+#### 네이티브 쿼리
+* `SQL`을 직접 작성하여 사용하는 방법
+* 가급적이면 네이티브 쿼리는 사용하지 않는 것을 권장
+* `Spring Data Projections` 활용
+
+##### `Spring Data JPA` 기반 네이티브 쿼리
+* 페이징 지원
+* 반환 타입
+  * `Object[]`
+  * `Tuple`
+  * `DTO`(`Spring Data` 인터페이스 `Projections` 지원)
+* 제약
+  * `Sort` 파라미터를 통한 정렬이 정상 동작하지 않을 수 있음
+    * 믿지 말고 직접 처리
+    * `JPQL`과 다르게 애플리케이션 로딩(컴파일) 시점에 문법 확인 불가
+* 동적 쿼리 불가
+
+##### `JPA` 네이티브 `SQL` 지원
+* `JPQL`은 위치 기반 파리미터를 `1`부터 시작하지만 네이티브 쿼리는 `0`부터 시작
+* 네이티브 쿼리르 엔티티가 아닌 `DTO`로 변환은 하려면
+  * `DTO` 대신 `JPA TUPLE` 조회
+  * `DTO` 대신 `MAP` 조회
+  * `@SqlResultSetMapping` 복잡
+  * `Hibernate ResultTransformer`를 사용하기 때문에 복잡
+    * [참조](https://vladmihalcea.com/the-best-way-to-map-a-projection-query-to-a-dto-with-jpa-and-hibernate/)
+  * 네이티브 쿼리를 `DTO`로 조회할 때는 `JdbcTemplate or myBatis` 사용을 권장
+
+##### Projections 활용
+* `Spring Data JPA` 네이티브 쿼리 + 인터페이스 기반 `Projections` 활용
+
+##### 동적 네이티브 쿼리
+* `hibernate`를 직접 활용
+  ~~~
+  String sql = "select m.userName as userName from member m";
+  List<MemberDto> result = em.createNativeQuery(sql)
+          .setFirstResult(0)
+          .setMaxResults(10)
+          .unwrap(NativeQuery.class)
+          .addScalar("username")
+          .setResultTransformer(Transformers.aliasToBean(MemberDto.class))
+          .getResultList();
+  }
+  ~~~
+* `Spring JdbcTemplate`, `myBatis`, `jooq` 같은 외부 라이브러리 사용
