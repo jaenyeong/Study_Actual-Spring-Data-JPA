@@ -1,8 +1,7 @@
 package com.jaenyeong.study_actualspringdatajpa.repository;
 
 import com.jaenyeong.study_actualspringdatajpa.dto.MemberDto;
-import com.jaenyeong.study_actualspringdatajpa.entity.Member;
-import com.jaenyeong.study_actualspringdatajpa.entity.Team;
+import com.jaenyeong.study_actualspringdatajpa.entity.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -776,5 +775,51 @@ class MemberRepositoryTest {
 
         // Assert
         assertThat(findMember.getUserName()).isEqualTo("member1");
+    }
+
+    @Test
+    @DisplayName("프로젝션 테스트")
+    void projections() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
+
+        final Member member1 = new Member("member1", 11, teamA);
+        final Member member2 = new Member("member2", 12, teamA);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        // Act
+
+        // close projection
+        final List<UserNameCloseProjection> members1Name = memberRepository.findCloseProjectionsByUserName("member1");
+        final UserNameCloseProjection userName1 = members1Name.get(0);
+
+        // open projection
+        final List<UserNameOpenProjection> members2Name = memberRepository.findOpenProjectionsByUserName("member1");
+        final UserNameOpenProjection userName2 = members2Name.get(0);
+
+        // class projection
+        final List<UserNameClassProjectionDto> members3Name = memberRepository.findClassProjectionsByUserName("member1");
+        final UserNameClassProjectionDto userName3 = members3Name.get(0);
+
+        // dynamic projection
+        final List<UserNameClassProjectionDto> members4Name = memberRepository.findDynamicProjectionsByUserName("member1", UserNameClassProjectionDto.class);
+        final UserNameClassProjectionDto userName4 = members4Name.get(0);
+
+        // nested close projection
+        final List<NestedCloseProjections> members5Name = memberRepository.findDynamicProjectionsByUserName("member1", NestedCloseProjections.class);
+        final NestedCloseProjections userName5 = members5Name.get(0);
+
+        // Assert
+        assertThat(userName1.getUserName()).isEqualTo("member1");
+        assertThat(userName2.getUserName()).isEqualTo("member1 11 teamA");
+        assertThat(userName3.getUserName()).isEqualTo("member1");
+        assertThat(userName4.getUserName()).isEqualTo("member1");
+        assertThat(userName5.getUserName()).isEqualTo("member1");
+        assertThat(userName5.getTeam().getName()).isEqualTo("teamA");
     }
 }

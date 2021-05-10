@@ -753,3 +753,82 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 ##### 정리
 * 실무에서 사용하기에는 매칭 조건이 너무 단순하고, `LEFT JOIN`이 안됨
   * 실무에서는 `QueryDSL` 사용하길 권장
+
+#### Projections
+* [문서 참조](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#projections)
+* 엔티티 대신에 `DTO`를 편리하게 조회할 때 사용
+* `SELECT` 쿼리에 검색 필드라고 보면 이해하기 쉬움
+* 조회할 엔티티의 필드를 `getter` 형식으로 정의하면 해당 필드만 선택해서 조회(`Projection`)
+* 반환 타입으로 인지하기 때문에 메서드명은 어떻게 작명하든 상관 없음
+
+##### Closed Projections
+* 정의한 필드만 가져오는 쿼리 실행
+~~~
+public interface UserNameCloseProjection {
+    String getUserName();
+}
+~~~
+
+##### Open Projections
+* `SpEL` 문법 지원
+  * `SpEL` 사용하면 일단 엔티티를 가져온 후 앱에서 연산하기 때문에 `JPQL` 최적화가 안됨
+~~~
+public interface UserNameOpenProjection {
+    @Value("#{target.userName + ' ' + target.age + ' ' + target.team.name}")
+    String getUserName();
+}
+~~~
+
+##### Class Projections
+* 생성자에 파라미터명으로 매칭됨
+~~~
+@RequiredArgsConstructor
+@Getter
+public class UserNameProjectionDto {
+    private final String userName;
+}
+~~~
+
+##### Dynamic Projections
+* 동적으로 프로젝션을 지정할 수 있음
+* 선언 예시
+  * `<T> List<T> findDynamicProjectionsByUserName(final String username, final Class<T> type);`
+* 사용 예시
+  * `memberRepository.findDynamicProjectionsByUserName("member1", UserNameClassProjectionDto.class);`
+
+##### Nested Close Projection
+* 프로젝션 대상이 `Root` 엔티티면, `JPQL SELECT` 절 최적화 가능
+* 프로젝션 대상이 `Root`가 아니면 `LEFT OUTER JOIN` 처리
+  * 모든 필드를 `SELECT`해서 엔티티로 조회한 다음에 계산
+  ~~~
+  public interface NestedCloseProjections {
+      // 루트(Root) 최적화가 됨
+      String getUserName();
+      // 루트 이외에 최적화 안됨
+      TeamInfo getTeam();
+  
+      interface TeamInfo {
+          String getName();
+      }
+  }
+  ~~~
+* 실행되는 쿼리
+  ~~~
+  select
+      member0_.user_name as col_0_0_,
+      team1_.team_id as col_1_0_,
+      team1_.team_id as team_id1_2_,
+      team1_.name as name2_2_ 
+  from
+      member member0_ 
+  left outer join
+      team team1_ 
+          on member0_.team_id=team1_.team_id 
+  where
+      member0_.user_name=?
+  ~~~
+
+##### 정리
+* 프로젝션 대상이 `Root` 엔티티면 효과적이지만 엔티티가 두 개 이상(`JOIN` 사용)이면 `JPQL SELECT` 최적화가 안됨
+  * 실무의 복잡한 쿼리를 해결하기에는 한계가 있기 때문에 단순한 상황에만 사용
+* 실무에서는 `QueryDSL` 사용하길 권장
