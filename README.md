@@ -725,3 +725,31 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
   * `JPA Criteria`의 `Root`, `CriteriaQuery`, `CriteriaBuilder` 클래스를 파라미터 제공
   * 예제에서는 편의상 람다를 사용
 * 실무에서는 `JPA Criteria`가 아닌 `QueryDSL`을 사용하길 권장
+
+#### Query By Example
+* [문서 참조](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#query-by-example)
+* `Probe`
+  * 필드에 데이터가 있는 실제 도메인 객체
+  * 엔티티 객체 자체가 검색 조건이 됨
+* `ExampleMatcher`
+  * 특정 필드를 일치시키는 상세한 정보 제공, 재사용 가능
+* `Example`
+  * `Probe`와 `ExampleMatcher`로 구성, 쿼리를 생성하는데 사용
+
+##### 장점
+* 동적 쿼리를 편리하게 처리
+* 도메인 객체를 그대로 사용
+* 데이터 저장소를 `RDB`에서 `NOSQL`로 변경해도 코드 변경이 없게 추상화 되어 있음
+* `Spring Data JPA`의 `JpaRepository` 인터페이스에 이미 포함
+
+##### 단점
+* 조인은 가능하지만 내부 조인(`INNER JOIN`)만 가능, 외부 조인(`LEFT JOIN`) 안됨
+* 다음과 같은 중첩 제약조건 안됨
+  * `firstname = ?0 or (firstname = ?1 and lastname = ?2)`
+* 매칭 조건이 매우 단순함
+  * 문자는 `starts/contains/ends/regex`
+  * 다른 속성은 정확한 매칭(`=`)만지원
+
+##### 정리
+* 실무에서 사용하기에는 매칭 조건이 너무 단순하고, `LEFT JOIN`이 안됨
+  * 실무에서는 `QueryDSL` 사용하길 권장

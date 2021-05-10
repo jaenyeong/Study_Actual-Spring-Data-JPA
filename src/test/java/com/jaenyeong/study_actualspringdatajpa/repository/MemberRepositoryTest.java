@@ -8,10 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.byLessThan;
 
 @DisplayName("멤버 -> Spring-Data-JPA 테스트")
 @SpringBootTest
@@ -741,5 +737,44 @@ class MemberRepositoryTest {
 
         // Assert
         assertThat(members.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Query By Example 테스트")
+    void queryByExample() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
+
+        final Member member1 = new Member("member1", 11, teamA);
+        final Member member2 = new Member("member2", 12, teamA);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        // Act
+
+        // Probe
+        final Member probeMember = new Member("member1");
+
+        // Team을 삽입하지 않아도 매칭이 됨
+//        final Team probeTeam = new Team("teamA");
+//        probeMember.setTeam(probeTeam);
+
+        // ExampleMatcher 생성 (age 프로퍼티 무시)
+        final ExampleMatcher notContainAgeMatcher = ExampleMatcher.matching()
+            .withIgnorePaths("age");
+
+        // Example
+        final Example<Member> exampleMember = Example.of(probeMember, notContainAgeMatcher);
+
+        final List<Member> members = memberRepository.findAll(exampleMember);
+
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
     }
 }
