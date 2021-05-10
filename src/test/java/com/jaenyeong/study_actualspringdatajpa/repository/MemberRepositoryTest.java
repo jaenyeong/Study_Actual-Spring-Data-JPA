@@ -32,6 +32,9 @@ class MemberRepositoryTest {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Autowired
+    private CustomMemberQueryRepository customMemberQueryRepository;
+
     @PersistenceContext
     private EntityManager em;
 
@@ -656,5 +659,37 @@ class MemberRepositoryTest {
         final List<Member> members = memberRepository.findLockByUserName("member1");
 
         // Assert
+    }
+
+    @Test
+    @DisplayName("특정 쿼리(메서드)만 커스텀한 리포지토리 테스트")
+    void callCustomRepositoryMethod() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+
+        // Act
+        final List<Member> members = memberRepository.findCustomMember();
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        assertThat(findMember.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("커스텀 리포지토리 구현 테스트")
+    void callCustomQueryRepository() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+
+        // Act
+        final List<Member> members = customMemberQueryRepository.findAllMembers();
+        final Member findMember = members.get(0);
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member1");
+        assertThat(findMember.getAge()).isEqualTo(10);
     }
 }

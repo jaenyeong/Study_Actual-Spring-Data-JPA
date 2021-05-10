@@ -306,3 +306,31 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
   * 실시간 트래픽이 많은 서비스에서는 가급적 비관적 락을 걸지 않는 것을 권함
     * 낙관적 락(실제 잠금이 아닌 버저닝을 활용한 방식) 사용하거나 잠금 처리를 우회할 수 있는 방식을 고려
     * 하지만 결제와 같은 기능은 비관적 락을 활용하기도 함
+
+### 사용자 정의 리포지토리 구현
+* `Spring Data JPA` 리포지토리는 인터페이스만 정의, 구현체는 스프링이 자동 생성
+* 리포지토리를 커스터마이징 하려면 인터페이스를 직접구현해야 하기 때문에 구현할 기능이 너무 많음
+* 인터페이스의 메서드를 직접 구현?
+  * `JPA` 직접 사용 `EntityManager`
+  * 스프링 `JDBC Template` 사용
+  * `MyBatis` 사용
+  * `DB Connection` 직접 사용
+  * `QueryDSL` 사용
+
+#### 커스텀 리포지토리
+* 커스텀 리포지토리는 `QueryDSL`, `JDBC Template` 등을 사용할 때 자주 사용
+  * 별도(임의)의 리포지토리를 인터페이스가 아닌 클래스로 생성(구현), 빈으로 등록하여 직접 사용해도 무방
+    * 다만 이때는 `Spring Data JPA`와 무관하게 작동
+* 명명 규칙(관례)
+  * `상속시킬 리포지토리 인터페이스명` + `Impl` (`MemberRepository` + `Impl`)
+    * 스프링 데이터 JPA가 인식해서 스프링 빈으로 등록
+    * 최신 버전에서는 `CustomMemberRepsitoryImpl`로 명명해도 동작은 함
+  * `Impl` 대신 다른 이름으로 명명할 때 설정
+    * `xml` 설정
+      ~~~
+      <repositories base-package="com.jaenyeong.study_actualspringdatajpa.repository" repository-impl-postfix="Impl" />
+      ~~~
+    * `Java Config` 설정
+      ~~~
+      @EnableJpaRepositories(basePackages = "com.jaenyeong.study_actualspringdatajpa.repository", repositoryImplementationPostfix = "Impl")
+      ~~~
