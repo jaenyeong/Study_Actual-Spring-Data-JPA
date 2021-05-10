@@ -480,3 +480,48 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
         </persistence-unit-metadata>
     </entity-mappings>
     ~~~
+
+### Web 확장
+
+#### 도메인 클래스 컨버터
+* 사용
+  ~~~
+  package com.jaenyeong.study_actualspringdatajpa.controller;
+  
+  import com.jaenyeong.study_actualspringdatajpa.entity.Member;
+  import com.jaenyeong.study_actualspringdatajpa.repository.MemberRepository;
+  import lombok.RequiredArgsConstructor;
+  import org.springframework.web.bind.annotation.GetMapping;
+  import org.springframework.web.bind.annotation.PathVariable;
+  import org.springframework.web.bind.annotation.RestController;
+  
+  import javax.annotation.PostConstruct;
+  
+  @RestController
+  @RequiredArgsConstructor
+  public class MemberController {
+  private final MemberRepository memberRepository;
+  
+      @PostConstruct
+      public void init() {
+          memberRepository.save(new Member("member1", 10));
+      }
+  
+      @GetMapping("/members/v1/{id}")
+      public String findMemberV1(@PathVariable("id") final Long id) {
+          return memberRepository.findById(id)
+              .orElseGet(() -> new Member("Not Found", 99))
+              .getUserName();
+      }
+  
+      @GetMapping("/members/v2/{id}")
+      public String findMemberV2(@PathVariable("id") final Member member) {
+          return member.getUserName();
+      }
+  }
+  ~~~
+* `HTTP` 요청은 회원 아이디를 받지만, 도메인 클래스 컨버터가 중간에 작동하여 회원 엔티티 객체를 반환
+  * 도메인 클래스 컨버터도 마찬가지로 리포지토리를 사용해 엔티티를 찾음
+* 실무에서는 이렇게 간단한 경우가 없어 자주 사용되진 않음
+  * 도메인 클래스 컨버터로 엔티티를 파라미터로 받으면, 이 엔티티는 단순 조회용으로만 사용할 것
+  * 트랜잭션이 없는 범위에서 엔티티를 조회했으므로, 엔티티를 변경해도 DB에 반영되지 않음
