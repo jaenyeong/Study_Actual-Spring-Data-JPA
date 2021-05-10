@@ -18,7 +18,7 @@ import static javax.persistence.FetchType.LAZY;
 // 따라서 가급적 연관관계 필드는 넣지 않는 것이 좋음
 @ToString(of = {"id", "userName", "age"})
 @NamedEntityGraph(name = "Member.all", attributeNodes = @NamedAttributeNode("team"))
-public class Member {
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "member_id")

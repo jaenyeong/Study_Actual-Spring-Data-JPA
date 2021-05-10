@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.byLessThan;
 
 @DisplayName("멤버 -> Spring-Data-JPA 테스트")
 @SpringBootTest
@@ -691,5 +692,29 @@ class MemberRepositoryTest {
         // Assert
         assertThat(findMember.getUserName()).isEqualTo("member1");
         assertThat(findMember.getAge()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("JPA 이벤트 베이스 엔티티 테스트 (JpaBaseEntity 상속)")
+    void jpaBaseEntity() throws Exception {
+        // Arrange
+        final Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+
+        // 일반적으로 이런 스레드 슬립은 테스트에 좋지 않음
+        Thread.sleep(100);
+        member1.setUserName("member2");
+
+        em.flush(); // @PreUpdate
+        em.clear();
+
+        // Act
+        final Member findMember = memberRepository.findById(member1.getId())
+            .orElseGet(() -> new Member("Not Found", 99));
+
+        // Assert
+        assertThat(findMember.getUserName()).isEqualTo("member2");
+        assertThat(findMember.getCreatedDate()).isBefore(findMember.getLastModifiedDate());
+        assertThat(findMember.getCreatedBy()).isEqualTo(findMember.getLastModifiedBy());
     }
 }

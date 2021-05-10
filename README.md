@@ -334,3 +334,149 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
       ~~~
       @EnableJpaRepositories(basePackages = "com.jaenyeong.study_actualspringdatajpa.repository", repositoryImplementationPostfix = "Impl")
       ~~~
+
+### Auditing
+* 엔티티 생성, 변경 시 다음 사항을 추적하려면?
+  * 등록일
+  * 수정일
+  * 등록자
+  * 수정자
+
+#### 순수 `JPA`에서 처리
+* `Base Entity`
+  ~~~
+  package com.jaenyeong.study_actualspringdatajpa.entity;
+  
+  import javax.persistence.Column;
+  import javax.persistence.MappedSuperclass;
+  import javax.persistence.PrePersist;
+  import javax.persistence.PreUpdate;
+  import java.time.LocalDateTime;
+  
+  @MappedSuperclass
+  @Getter
+  public abstract class JpaBaseEntity {
+      @Column(updatable = false)
+      private LocalDateTime createdDate;
+      private LocalDateTime updatedDate;
+      
+      @PrePersist
+      public void prePersist() {
+          LocalDateTime now = LocalDateTime.now();
+          createdDate = now;
+          updatedDate = now;
+      }
+      
+      @PreUpdate
+      public void preUpdate() {
+          updatedDate = LocalDateTime.now();
+      }
+  }
+  ~~~
+
+* `Entity` 클래스에서 상속
+  ~~~
+  public class Member extends JpaBaseEntity {
+  }
+  ~~~
+
+#### `Spring Data JPA`에서 처리
+* 설정
+  * `@EnableJpaAuditing` 스프링 부트 설정 클래스에 적용
+    * 적용하지 않으면 작동하지 않음
+    ~~~
+    @EnableJpaAuditing
+    @SpringBootApplication
+    public class StudyActualSpringDataJpaApplication {
+    }
+    ~~~
+* `Base Entity`
+  * `@EntityListeners(AuditingEntityListener.class)` 엔티티 클래스에 적용
+  ~~~
+  package com.jaenyeong.study_actualspringdatajpa.entity;
+
+  import lombok.Getter;
+  import org.springframework.data.annotation.CreatedBy;
+  import org.springframework.data.annotation.CreatedDate;
+  import org.springframework.data.annotation.LastModifiedBy;
+  import org.springframework.data.annotation.LastModifiedDate;
+  import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+  
+  import javax.persistence.Column;
+  import javax.persistence.EntityListeners;
+  import javax.persistence.MappedSuperclass;
+  import java.time.LocalDateTime;
+  
+  @EntityListeners(AuditingEntityListener.class)
+  @MappedSuperclass
+  @Getter
+  public abstract class BaseEntity {
+      @CreatedDate
+      @Column(updatable = false)
+      private LocalDateTime createdDate;
+  
+      @LastModifiedDate
+      private LocalDateTime lastModifiedDate;
+  
+      @CreatedBy
+      @Column(updatable = false)
+      private String createdBy;
+    
+      @LastModifiedBy
+      private String lastModifiedBy;
+  }
+  ~~~
+* `Entity` 클래스에서 상속
+  ~~~
+  public class Member extends BaseEntity {
+  }
+  ~~~
+* 등록자, 수정자를 등록해주는 빈 등록
+  * 실무에서는 세션 정보나, 스프링 시큐리티 로그인 정보에서 ID를 받아 처리
+  ~~~
+  @Bean
+  public AuditorAware<String> auditorProvider() {
+      return () -> Optional.of(UUID.randomUUID().toString());
+  }
+  ~~~
+* 실무에서는 등록일, 수정일은 있지만 등록자, 수정자가 없는 경우로 인해 분리해 사용
+  ~~~
+   public class BaseTimeEntity {
+        @CreatedDate
+        @Column(updatable = false)
+        private LocalDateTime createdDate;
+  
+        @LastModifiedDate
+        private LocalDateTime lastModifiedDate;
+   }
+  
+   public class BaseEntity extends BaseTimeEntity {
+       @CreatedBy
+       @Column(updatable = false)
+       private String createdBy;
+  
+       @LastModifiedBy
+       private String lastModifiedBy;
+   }
+  ~~~
+* 최초 저장 시점에 등록일, 등록자 뿐 아니라 수정일, 수정자도 같이 저장
+  * 이를 통해 `null` 방지와 변경 여부 확인 가능하여 유지보수 관점에서 편리 
+  * 수정을 저장하지 않으려면 `@EnableJpaAuditing(modifyOnCreate = false)` 태깅
+* 전체 적용
+  * `@EntityListeners(AuditingEntityListener.class)` 생략, `orm.xml` 파일에 설정
+  * `META-INF/orm.xml` 파일 설정
+    ~~~
+    <?xml version=“1.0” encoding="UTF-8”?>
+    <entity-mappings xmlns=“http://xmlns.jcp.org/xml/ns/persistence/orm”
+                     xmlns:xsi=“http://www.w3.org/2001/XMLSchema-instance”
+                     xsi:schemaLocation=“http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd”
+                     version=“2.2">
+        <persistence-unit-metadata>
+            <persistence-unit-defaults>
+                <entity-listeners>
+                    <entity-listener class="org.springframework.data.jpa.domain.support.AuditingEntityListener”/>
+                </entity-listeners>
+            </persistence-unit-defaults>
+        </persistence-unit-metadata>
+    </entity-mappings>
+    ~~~
