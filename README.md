@@ -639,3 +639,89 @@ List<Member> findByNames(@Param("userNames") Collection<String> userNames);
 > * 따라서 `Persistable`를 사용해 새로운 엔티티인지 확인하는 것이 효과적
 > * 엔티티 등록 시간(`@CreatedDate`)을 조합하면 편리하게 사용 가능
 >   * 값의 유무로 새로운 엔티티인지 판단함
+
+### 나머지 기능
+
+#### Specifications (명세)
+* 도메인 주도 설계 (`Domain Driven Design`)에서 SPECIFICATION(명세)라는 개념 소개
+* `Spring Data JPA`는 `JPA Criteria`를 활용해서 이 개념을 사용할 수 있도록 지원
+  * 실무에서 `JPA Criteria`는 가급적 사용하지 않을 것을 권함
+
+##### 술어(`predicate`)
+* 참 또는 거짓으로 평가
+* AND OR 같은 연산자로 조합해서 다양한 검색조건을 쉽게 생성(컴포지트 패턴)
+* `Spring Data JPA`는 `org.springframework.data.jpa.domain.Specification` 클래스로 정의
+
+##### 사용 방법
+* `JpaSpecificationExecutor` 인터페이스 상속
+  ~~~
+  public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecificationExecutor<Member> {
+  }
+  ~~~
+* `JpaSpecificationExecutor` 인터페이스
+  ~~~
+  public interface JpaSpecificationExecutor<T> {
+      Optional<T> findOne(@Nullable Specification<T> spec);
+      List<T> findAll(Specification<T> spec);
+      Page<T> findAll(Specification<T> spec, Pageable pageable);
+      List<T> findAll(Specification<T> spec, Sort sort);
+      long count(Specification<T> spec);
+  }
+  ~~~
+* `Specification`을 파라미터로 받아서 검색 조건으로 사용
+* MemberSpec 명세 정의 코드
+  ~~~
+  public final class MemberSpec {
+
+      public static Specification<Member> teamName(final String teamName) {
+          return (root, query, builder) -> {
+              if (!StringUtils.hasText(teamName)) {
+                  return null;
+              }
+    
+              // 팀을 회원과 조인
+              final Join<Member, Team> t = root.join("team", JoinType.INNER);
+              return builder.equal(t.get("name"), teamName);
+          };
+      }
+
+      public static Specification<Member> username(final String userName) {
+          return (root, query, builder) -> builder.equal(root.get("userName"), userName);
+      }
+  }
+  ~~~
+* 사용 예시
+  ~~~
+  @Test
+  @DisplayName("명세 테스트")
+  void specification() throws Exception {
+      // Arrange
+      final Team teamA = new Team("teamA");
+      teamRepository.save(teamA);
+
+      final Member member1 = new Member("member1", 11, teamA);
+      final Member member2 = new Member("member2", 12, teamA);
+      memberRepository.save(member1);
+      memberRepository.save(member2);
+
+      em.flush();
+      em.clear();
+
+      // Act
+      final Specification<Member> spec = MemberSpec.username("member1")
+          .and(MemberSpec.teamName("teamA"));
+      final List<Member> members = memberRepository.findAll(spec);
+
+      // Assert
+      assertThat(members.size()).isEqualTo(1);
+  }
+  ~~~
+* `Specification`을 구현하면 명세들을 조립 가능
+  * `where()`, `and()`, `or()`, `not()` 제공
+
+##### 정리
+* 명세를 정의하려면 `Specification` 인터페이스를 구현
+* 명세를 정의할 때는 `toPredicate(...)` 메서드만 구현하면 됨
+  * `JPA Criteria`의 `Root`, `CriteriaQuery`, `CriteriaBuilder` 클래스를 파라미터 제공
+  * 예제에서는 편의상 람다를 사용
+* 실무에서는 `JPA Criteria`가 아닌 `QueryDSL`을 사용하길 권장

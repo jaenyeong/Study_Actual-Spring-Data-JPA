@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -716,5 +717,29 @@ class MemberRepositoryTest {
         assertThat(findMember.getUserName()).isEqualTo("member2");
         assertThat(findMember.getCreatedDate()).isBefore(findMember.getLastModifiedDate());
         assertThat(findMember.getCreatedBy()).isEqualTo(findMember.getLastModifiedBy());
+    }
+
+    @Test
+    @DisplayName("명세 테스트")
+    void specification() throws Exception {
+        // Arrange
+        final Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
+
+        final Member member1 = new Member("member1", 11, teamA);
+        final Member member2 = new Member("member2", 12, teamA);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        // Act
+        final Specification<Member> spec = MemberSpec.username("member1")
+            .and(MemberSpec.teamName("teamA"));
+        final List<Member> members = memberRepository.findAll(spec);
+
+        // Assert
+        assertThat(members.size()).isEqualTo(1);
     }
 }

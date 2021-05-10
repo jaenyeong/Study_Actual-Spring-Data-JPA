@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long>, CustomMemberRepository {
+public interface MemberRepository extends JpaRepository<Member, Long>, CustomMemberRepository, JpaSpecificationExecutor<Member> {
     List<Member> findByUserNameAndAgeGreaterThan(final String userName, final int age);
 
     List<Member> findHelloBy();
